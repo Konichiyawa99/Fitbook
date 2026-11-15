@@ -137,11 +137,11 @@
     });
   });
 
-  document.getElementById('signupForm').addEventListener('submit', function (e) {
+  document.getElementById('signupForm').addEventListener('submit', async function (e) {
     e.preventDefault();
     var err = document.getElementById('formError');
     document.querySelectorAll('.field').forEach(function (f) { f.classList.remove('has-error'); });
-    err.classList.remove('is-visible');
+    err.classList.remove('is-visible', 'is-success');
 
     var msg = '';
     var bad = [];
@@ -168,7 +168,37 @@
       if (bad[0]) bad[0].focus();
       return;
     }
-    window.location.href = 'login.html';
+
+    var submitButton = this.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    try {
+      var result = await window.supabaseClient.auth.signUp({
+        email: email.value.trim(),
+        password: pw.value,
+        options: {
+          data: {
+            first_name: first.value.trim(),
+            last_name: last.value.trim()
+          }
+        }
+      });
+
+      if (result.error) throw result.error;
+
+      if (result.data.session) {
+        window.location.href = 'memberdashboard.html';
+        return;
+      }
+
+      err.textContent = 'Account created. Check your email to confirm your account before logging in.';
+      err.classList.add('is-visible', 'is-success');
+    } catch (error) {
+      console.error('Unable to create account:', error);
+      err.textContent = 'Unable to create account: ' + error.message;
+      err.classList.add('is-visible');
+    } finally {
+      submitButton.disabled = false;
+    }
   });
 </script>
 

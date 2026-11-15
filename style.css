@@ -558,6 +558,11 @@ body.fixed-page .form-footnote {
   text-align: center;
 }
 .form-error.is-visible { display: block; }
+.form-error.is-success {
+  background: rgba(46, 139, 87, 0.14);
+  border-color: #2e8b57;
+  color: #8fe0aa;
+}
 .field.has-error input { border-color: #dc3545; background-color: #fbe9eb; }
 
 /* ---- Signup uses the SAME sizes as login; only trims outer spacing ---- */
