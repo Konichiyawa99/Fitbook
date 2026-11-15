@@ -12,6 +12,8 @@
 <link href="https://fonts.googleapis.com/css2?family=BBH+Bogle&display=swap" rel="stylesheet" />
 
 <link rel="stylesheet" href="home.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
 </head>
 <body>
 
@@ -150,7 +152,7 @@
 </footer>
 
 <script>
-  document.getElementById('contactForm').addEventListener('submit', function (e) {
+  document.getElementById('contactForm').addEventListener('submit', async function (e) {
     e.preventDefault();
     var s = document.getElementById('cfStatus');
     var first = document.getElementById('cf-first').value.trim();
@@ -161,7 +163,18 @@
     if (!email.value.trim()) { s.classList.add('is-error'); s.textContent = 'Please enter your email first.'; return; }
     if (!email.checkValidity()) { s.classList.add('is-error'); s.textContent = 'That email doesn\u2019t look right. Please check it.'; return; }
     if (!msg) { s.classList.add('is-error'); s.textContent = 'Please type your message.'; return; }
-    // TODO: send to your backend / email service here
+    try {
+      await window.sendMessage(
+        [first, document.getElementById('cf-last').value.trim()].filter(Boolean).join(' '),
+        email.value.trim(),
+        msg
+      );
+    } catch (error) {
+      console.error('Unable to send contact message:', error);
+      s.classList.add('is-error');
+      s.textContent = 'Sorry, your message could not be sent. Please try again later.';
+      return;
+    }
     s.classList.add('is-ok'); s.textContent = 'Thanks! Your message has been sent. We will reply within 24 hours.';
     this.reset();
   });
