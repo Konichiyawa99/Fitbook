@@ -1,32 +1,12 @@
-/* =========================================================
-   payment-history.js
-   Shows only the payments (and session usage) for the class
-   picked in the "Classes you Enrolled" dropdown.
-   ========================================================= */
 (function () {
   'use strict';
 
-  /* SAMPLE DATA — replace with the member's real records
-     (e.g. loaded from your backend). Keys must match the
-     dropdown option text exactly. */
-  var PAYMENTS = {
-    'Muay Thai': [
-      { category: '4-Session Pack', date: 'Nov 3, 2026',  ref: '1234 5678 9012', amount: 500, status: 'paid',    taken: 2, total: 4 },
-      { category: 'Single Session', date: 'Oct 12, 2026', ref: '5555 4444 3333', amount: 150, status: 'paid',    taken: 1, total: 1 }
-    ],
-    'Taekwondo': [
-      { category: '4-Session Pack', date: 'Nov 10, 2026', ref: '9876 5432 1098', amount: 500, status: 'pending', taken: 0, total: 4 }
-    ]
-  };
-
-  var STATUS_LABEL = { paid: 'Paid', pending: 'Pending', failed: 'Failed' };
-
-  var select  = document.getElementById('subscribed-classes');
-  var list    = document.getElementById('payment-list');
-  var count   = document.getElementById('payment-count');
-  var label   = document.getElementById('payment-class');
+  var select = document.getElementById('subscribed-classes');
+  var list = document.getElementById('payment-list');
+  var count = document.getElementById('payment-count');
+  var label = document.getElementById('payment-class');
   var summary = document.getElementById('payment-summary');
-  if (!select || !list) return;
+  if (!list) return;
 
   function el(tag, className, text) {
     var node = document.createElement(tag);
@@ -35,69 +15,123 @@
     return node;
   }
 
-  function peso(n) {
-    return '\u20B1' + Number(n).toLocaleString('en-PH');
+  function peso(amount) {
+    return '₱' + Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  function buildItem(p) {
-    var li = el('li', 'payment-item');
-
-    var info = el('div', 'payment-item__info');
-    info.appendChild(el('p', 'payment-item__class', p.category));
-    info.appendChild(el('p', 'payment-item__meta', p.date + ' \u00B7 GCash Ref ' + p.ref));
-
-    var side = el('div', 'payment-item__side');
-    side.appendChild(el('p', 'payment-item__amount', peso(p.amount)));
-    side.appendChild(el('span', 'status-pill status-pill--' + p.status, STATUS_LABEL[p.status] || p.status));
-
-    li.appendChild(info);
-    li.appendChild(side);
-
-    var sessions = el('div', 'payment-item__sessions');
-    if (p.status === 'paid') {
-      var row = el('div', 'sessions-label');
-      row.appendChild(el('span', '', 'Sessions taken'));
-      row.appendChild(el('strong', '', p.taken + ' / ' + p.total));
-      var bar = el('div', 'sessions-bar');
-      var fill = el('span');
-      fill.style.width = Math.min(100, Math.round((p.taken / p.total) * 100)) + '%';
-      bar.appendChild(fill);
-      sessions.appendChild(row);
-      sessions.appendChild(bar);
-    } else {
-      sessions.appendChild(el('p', 'sessions-note',
-        p.status === 'pending'
-          ? 'Sessions unlock once your payment is verified.'
-          : 'Payment failed. Please try booking again.'));
-    }
-    li.appendChild(sessions);
-    return li;
-  }
-
-  function render() {
-    var cls = select.value || select.options[select.selectedIndex].text;
-    var items = PAYMENTS[cls] || [];
+  function render(items) {
+    var selected = select ? select.value : '';
+    var visible = items.filter(function (payment) {
+      return !selected || payment.groupLabel === selected;
+    });
 
     list.textContent = '';
-    label.textContent = cls;
-    count.textContent = items.length;
-
-    if (!items.length) {
-      summary.textContent = '';
-      list.appendChild(el('li', 'payment-empty', 'No payments yet for this class.'));
+    if (label) label.textContent = selected || 'All payments';
+    if (count) count.textContent = visible.length;
+    if (!visible.length) {
+      if (summary) summary.textContent = '';
+      list.appendChild(el('li', 'payment-empty', 'No payments found.'));
       return;
     }
 
-    var taken = 0, total = 0;
-    items.forEach(function (p) {
-      if (p.status === 'paid') { taken += p.taken; total += p.total; }
-      list.appendChild(buildItem(p));
+    visible.forEach(function (payment) {
+      var li = el('li', 'payment-item');
+      var info = el('div', 'payment-item__info');
+      info.appendChild(el('p', 'payment-item__class', payment.groupLabel));
+      var details = [payment.date, payment.method, payment.reference].filter(Boolean).join(' · ');
+      info.appendChild(el('p', 'payment-item__meta', details));
+
+      var side = el('div', 'payment-item__side');
+      side.appendChild(el('p', 'payment-item__amount', peso(payment.amount)));
+      var normalized = String(payment.status || 'Unknown').toLowerCase();
+      var statusClass = ['paid', 'pending', 'failed'].indexOf(normalized) !== -1 ? normalized : 'pending';
+      side.appendChild(el('span', 'status-pill status-pill--' + statusClass, payment.status || 'Unknown'));
+      li.appendChild(info);
+      li.appendChild(side);
+      list.appendChild(li);
     });
-    summary.textContent = total
-      ? 'Total sessions taken: ' + taken + ' of ' + total
-      : 'No sessions available yet';
+    if (summary) summary.textContent = visible.length + (visible.length === 1 ? ' payment' : ' payments');
   }
 
-  select.addEventListener('change', render);
-  render();
+  async function load() {
+    var account = await window.GTGData.getAccount();
+    if (!account || !account.member) throw new Error('This account is not linked to a member profile.');
+
+    var payments = window.GTGData.throwIfError(await window.supabaseClient
+      .from('tbl_payment')
+      .select('paymentid, bookingid, subscriptionplanid, paymentstatus, paymentmethod, referenceno, amountpaid, paymentdate')
+      .eq('memberid', account.member.memberid)
+      .order('paymentdate', { ascending: false })) || [];
+
+    var planIds = Array.from(new Set(payments.map(function (row) { return row.subscriptionplanid; }).filter(Boolean)));
+    var bookingIds = Array.from(new Set(payments.map(function (row) { return row.bookingid; }).filter(Boolean)));
+    var plans = planIds.length
+      ? window.GTGData.throwIfError(await window.supabaseClient
+        .from('tbl_subscriptionplan')
+        .select('subscriptionplanid, planname')
+        .in('subscriptionplanid', planIds))
+      : [];
+    var bookings = bookingIds.length
+      ? window.GTGData.throwIfError(await window.supabaseClient
+        .from('tbl_booking')
+        .select('bookingid, scheduleid')
+        .in('bookingid', bookingIds))
+      : [];
+    var scheduleIds = Array.from(new Set(bookings.map(function (row) { return row.scheduleid; }).filter(Boolean)));
+    var schedules = scheduleIds.length
+      ? window.GTGData.throwIfError(await window.supabaseClient
+        .from('tbl_schedule')
+        .select('scheduleid, classesid')
+        .in('scheduleid', scheduleIds))
+      : [];
+    var classIds = Array.from(new Set(schedules.map(function (row) { return row.classesid; }).filter(Boolean)));
+    var classes = classIds.length
+      ? window.GTGData.throwIfError(await window.supabaseClient
+        .from('tbl_classes')
+        .select('classesid, classesname')
+        .in('classesid', classIds))
+      : [];
+
+    var plansById = {};
+    var bookingsById = {};
+    var schedulesById = {};
+    var classesById = {};
+    plans.forEach(function (row) { plansById[row.subscriptionplanid] = row; });
+    bookings.forEach(function (row) { bookingsById[row.bookingid] = row; });
+    schedules.forEach(function (row) { schedulesById[row.scheduleid] = row; });
+    classes.forEach(function (row) { classesById[row.classesid] = row; });
+
+    var normalized = payments.map(function (row) {
+      var booking = bookingsById[row.bookingid];
+      var schedule = booking && schedulesById[booking.scheduleid];
+      var cls = schedule && classesById[schedule.classesid];
+      var plan = plansById[row.subscriptionplanid];
+      var groupLabel = cls ? cls.classesname : (plan ? plan.planname : 'Payment');
+      return {
+        groupLabel: groupLabel,
+        amount: row.amountpaid,
+        date: row.paymentdate ? new Date(row.paymentdate).toLocaleDateString() : '',
+        method: row.paymentmethod,
+        reference: row.referenceno ? 'Ref ' + row.referenceno : '',
+        status: row.paymentstatus
+      };
+    });
+
+    if (select) {
+      var current = select.value;
+      select.replaceChildren(new Option('All classes', ''));
+      Array.from(new Set(normalized.map(function (item) { return item.groupLabel; }))).forEach(function (value) {
+        select.add(new Option(value, value));
+      });
+      if (normalized.some(function (item) { return item.groupLabel === current; })) select.value = current;
+    }
+    render(normalized);
+    if (select) select.addEventListener('change', function () { render(normalized); });
+  }
+
+  load().catch(function (error) {
+    console.error('Unable to load payment history:', error);
+    list.textContent = '';
+    list.appendChild(el('li', 'payment-empty', 'Payment history could not be loaded: ' + error.message));
+  });
 })();

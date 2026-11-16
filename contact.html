@@ -81,36 +81,9 @@
 
     <div class="contact-form-card">
       <h2>Send Us a Message</h2>
-      <p>Fill out the form and our team will get back to you. We will reply within 24 hours.</p>
-
-      <form class="contact-form" id="contactForm" novalidate>
-        <div class="contact-form-row">
-          <div><label for="cf-first">First Name</label><input type="text" id="cf-first" name="first" placeholder="Juan" autocomplete="given-name" /></div>
-          <div><label for="cf-last">Last Name</label><input type="text" id="cf-last" name="last" placeholder="Dela Cruz" autocomplete="family-name" /></div>
-        </div>
-        <div class="contact-form-row">
-          <div><label for="cf-email">Email</label><input type="email" id="cf-email" name="email" placeholder="you@email.com" autocomplete="email" /></div>
-          <div><label for="cf-phone">Phone Number</label><input type="tel" id="cf-phone" name="phone" placeholder="09XX XXX XXXX" autocomplete="tel" /></div>
-        </div>
-        <div>
-          <label for="cf-topic">What's this about?</label>
-          <select id="cf-topic" name="topic">
-            <option>General Inquiry</option>
-            <option>Membership</option>
-            <option>Classes &amp; Schedules</option>
-            <option>Trainers</option>
-            <option>Other</option>
-          </select>
-        </div>
-        <div>
-          <label for="cf-message">Message</label>
-          <textarea id="cf-message" name="message" placeholder="Type your message here.."></textarea>
-        </div>
-
-        <p class="contact-form-status" id="cfStatus" role="alert"></p>
-
-        <button type="submit" class="btn-send">Send Message</button>
-      </form>
+      <p>Contact message submissions are not available because the current database schema does not include a message table. Please reach us directly:</p>
+      <p><a href="mailto:gtgfitness25@gmail.com">gtgfitness25@gmail.com</a></p>
+      <p><a href="tel:09175462414">0917 546 2414</a></p>
     </div>
 
   </section>
@@ -150,35 +123,6 @@
     </li>
   </ul>
 </footer>
-
-<script>
-  document.getElementById('contactForm').addEventListener('submit', async function (e) {
-    e.preventDefault();
-    var s = document.getElementById('cfStatus');
-    var first = document.getElementById('cf-first').value.trim();
-    var email = document.getElementById('cf-email');
-    var msg = document.getElementById('cf-message').value.trim();
-    s.className = 'contact-form-status is-visible';
-    if (!first) { s.classList.add('is-error'); s.textContent = 'Please enter your first name.'; return; }
-    if (!email.value.trim()) { s.classList.add('is-error'); s.textContent = 'Please enter your email first.'; return; }
-    if (!email.checkValidity()) { s.classList.add('is-error'); s.textContent = 'That email doesn\u2019t look right. Please check it.'; return; }
-    if (!msg) { s.classList.add('is-error'); s.textContent = 'Please type your message.'; return; }
-    try {
-      await window.sendMessage(
-        [first, document.getElementById('cf-last').value.trim()].filter(Boolean).join(' '),
-        email.value.trim(),
-        msg
-      );
-    } catch (error) {
-      console.error('Unable to send contact message:', error);
-      s.classList.add('is-error');
-      s.textContent = 'Sorry, your message could not be sent. Please try again later.';
-      return;
-    }
-    s.classList.add('is-ok'); s.textContent = 'Thanks! Your message has been sent. We will reply within 24 hours.';
-    this.reset();
-  });
-</script>
 
 </body>
 </html>

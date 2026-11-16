@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Equipment · GTG Fitness</title>
-<meta name="description" content="Rent or buy gear at GTG Fitness." />
+<meta name="description" content="View gym equipment inventory at GTG Fitness." />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -30,9 +30,8 @@
       </summary>
       <div class="settings-panel">
         <div class="settings-panel__profile">
-          <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80" alt="" />
           <div>
-            <p class="settings-panel__profile-name">Madriaga, Rafaela</p>
+            <p class="settings-panel__profile-name"></p>
             <p class="settings-panel__profile-sub">Member</p>
           </div>
         </div>
@@ -70,28 +69,15 @@
 
   <main class="app-main">
     <h1 class="page-title">Equipment</h1>
-    <p class="page-subtitle">Rent or buy gear for your next session.</p>
+    <p class="page-subtitle">Equipment inventory from the gym database.</p>
 
-    <div class="equip-layout">
-      <section aria-label="Available equipment">
-        <div class="chip-row" id="equip-filters" role="group" aria-label="Filter by category"></div>
-        <div class="equip-grid" id="equip-grid"></div>
-      </section>
-
-      <aside class="card equip-summary" aria-labelledby="equip-order-heading">
-        <h2 id="equip-order-heading" class="card-heading">Your Order <span class="badge-count" id="equip-count">0</span></h2>
-        <p class="equip-summary__empty" id="equip-empty">Add equipment with the + button.</p>
-        <ul class="order-summary__list" id="equip-order-list"></ul>
-        <p class="order-summary__total"><span>Total</span> <strong id="equip-total">&#8369;0</strong></p>
-        <button type="button" class="btn btn-navy btn-block" id="equip-checkout" disabled>Checkout</button>
-      </aside>
-    </div>
+    <div class="equip-grid" id="equip-grid" aria-live="polite"></div>
+    <p class="data-table__empty" id="equip-empty" hidden>No equipment records are available.</p>
+    <p class="form-error is-visible" id="equip-error" role="alert" hidden></p>
   </main>
 
 </div>
 
-<script src="equipment-data.js"></script>
-<script src="checkout.js"></script>
 <script src="shell.js"></script>
 <script src="equipment.js"></script>
 </body>

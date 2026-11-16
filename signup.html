@@ -170,6 +170,7 @@
     }
 
     var submitButton = this.querySelector('button[type="submit"]');
+    var accountCreated = false;
     submitButton.disabled = true;
     try {
       var result = await window.supabaseClient.auth.signUp({
@@ -178,14 +179,17 @@
         options: {
           data: {
             first_name: first.value.trim(),
-            last_name: last.value.trim()
+            last_name: last.value.trim(),
+            account_type: 'member'
           }
         }
       });
 
       if (result.error) throw result.error;
+      accountCreated = Boolean(result.data.user);
 
       if (result.data.session) {
+        await window.GTGData.ensureMemberProfile(result.data.user);
         window.location.href = 'memberdashboard.html';
         return;
       }
@@ -194,7 +198,9 @@
       err.classList.add('is-visible', 'is-success');
     } catch (error) {
       console.error('Unable to create account:', error);
-      err.textContent = 'Unable to create account: ' + error.message;
+      err.textContent = accountCreated
+        ? 'Your account was created, but its member profile could not be saved: ' + error.message
+        : 'Unable to create account: ' + error.message;
       err.classList.add('is-visible');
     } finally {
       submitButton.disabled = false;

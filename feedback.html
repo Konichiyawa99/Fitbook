@@ -30,9 +30,8 @@
       </summary>
       <div class="settings-panel">
         <div class="settings-panel__profile">
-          <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80" alt="" />
           <div>
-            <p class="settings-panel__profile-name">Madriaga, Rafaela</p>
+            <p class="settings-panel__profile-name"></p>
             <p class="settings-panel__profile-sub">Member</p>
           </div>
         </div>
@@ -92,43 +91,10 @@
           <label id="trainer-label" for="trainer-summary">Trainer:</label>
           <details class="dropdown" id="trainer">
             <summary id="trainer-summary">Choose a trainer</summary>
-            <div class="dropdown-list" role="listbox" aria-labelledby="trainer-label">
-              <button type="button" data-value="Coach Irene">
-                <img src="https://images.unsplash.com/photo-1594381898411-846e7d193883?auto=format&fit=crop&w=60&q=80" alt="" />
-                Coach Irene
-              </button>
-              <button type="button" data-value="Coach Ken">
-                <img src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=60&q=80" alt="" />
-                Coach Ken
-              </button>
-              <button type="button" data-value="Coach Ryan">
-                <img src="https://images.unsplash.com/photo-1567013127542-490d757e51fc?auto=format&fit=crop&w=60&q=80" alt="" />
-                Coach Ryan
-              </button>
-              <button type="button" data-value="Coach Tiana">
-                <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=60&q=80" alt="" />
-                Coach Tiana
-              </button>
-            </div>
+            <div class="dropdown-list" role="listbox" aria-labelledby="trainer-label" id="trainer-options"></div>
           </details>
           <input type="hidden" name="trainer" id="trainer-value" />
         </div>
-
-        <fieldset class="field-group" style="border: none; padding: 0; margin: 0 0 1.5rem;">
-          <legend>Rate:</legend>
-          <div class="star-rating">
-            <input type="radio" id="star5" name="rating" value="5" />
-            <label for="star5"><span class="visually-hidden">5 stars</span>★</label>
-            <input type="radio" id="star4" name="rating" value="4" />
-            <label for="star4"><span class="visually-hidden">4 stars</span>★</label>
-            <input type="radio" id="star3" name="rating" value="3" />
-            <label for="star3"><span class="visually-hidden">3 stars</span>★</label>
-            <input type="radio" id="star2" name="rating" value="2" />
-            <label for="star2"><span class="visually-hidden">2 stars</span>★</label>
-            <input type="radio" id="star1" name="rating" value="1" />
-            <label for="star1"><span class="visually-hidden">1 star</span>★</label>
-          </div>
-        </fieldset>
 
         <div class="field-group">
           <label for="message">Message:</label>
@@ -136,6 +102,7 @@
         </div>
 
         <div class="feedback-submit-row">
+          <p class="form-error" id="feedback-status" role="alert"></p>
           <button type="submit" class="btn btn-navy">Submit</button>
         </div>
 
@@ -146,46 +113,12 @@
 </div>
 
 <script>
-  // Populate custom dropdown summaries and hidden inputs on selection.
-  var trainerField = document.getElementById('trainer-field');
-  var trainerDropdown = document.getElementById('trainer');
-  var trainerSummary = document.getElementById('trainer-summary');
-  var trainerValue = document.getElementById('trainer-value');
-
-  document.querySelectorAll('.dropdown').forEach(function (dropdown) {
-    var summary = dropdown.querySelector('summary');
-    var hiddenInput = dropdown.nextElementSibling;
-    dropdown.querySelectorAll('.dropdown-list button').forEach(function (option) {
-      option.addEventListener('click', function () {
-        var value = option.getAttribute('data-value');
-        summary.textContent = value;
-        if (hiddenInput && hiddenInput.type === 'hidden') {
-          hiddenInput.value = value;
-        }
-        dropdown.removeAttribute('open');
-
-        // Only show the Trainer field when "Trainer" is chosen above.
-        if (dropdown.id === 'feedback-for') {
-          var showTrainer = value === 'Trainer';
-          trainerField.hidden = !showTrainer;
-          if (!showTrainer) {
-            trainerDropdown.removeAttribute('open');
-            trainerSummary.textContent = 'Choose a trainer';
-            trainerValue.value = '';
-          }
-        }
-      });
-    });
-  });
-</script>
-
-
-<script>
   document.addEventListener('click', function (e) {
     document.querySelectorAll('details.settings-menu[open]').forEach(function (d) {
       if (!d.contains(e.target)) d.removeAttribute('open');
     });
   });
 </script>
+<script src="feedback.js"></script>
 </body>
 </html>

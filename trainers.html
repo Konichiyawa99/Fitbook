@@ -30,9 +30,8 @@
       </summary>
       <div class="settings-panel">
         <div class="settings-panel__profile">
-          <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80" alt="" />
           <div>
-            <p class="settings-panel__profile-name">Madriaga, Rafaela</p>
+            <p class="settings-panel__profile-name"></p>
             <p class="settings-panel__profile-sub">Member</p>
           </div>
         </div>
@@ -73,113 +72,17 @@
       <h1 class="page-title">Meet our Trainers!</h1>
       <label for="category-filter" class="visually-hidden">Filter by category</label>
       <select id="category-filter" class="select-native">
-        <option>All Categories</option>
-        <option>Yoga</option>
-        <option>Zumba</option>
-        <option>Taekwondo</option>
-        <option>Muay Thai</option>
-        <option>Boxing</option>
-        <option>Gym</option>
+        <option value="">All Specialties</option>
       </select>
     </div>
 
-    <div class="trainers-grid">
-
-      <article class="trainer-card" data-categories="yoga,zumba,taekwondo,gym">
-        <h2 class="trainer-card__name">Coach Irene</h2>
-        <img class="trainer-card__photo" src="https://images.unsplash.com/photo-1594381898411-846e7d193883?auto=format&fit=crop&w=400&q=80" alt="Coach Irene flexing in a gym" />
-        <ul class="tag-list">
-          <li class="tag tag--yoga">Yoga</li>
-          <li class="tag tag--zumba">Zumba</li>
-          <li class="tag tag--taekwondo">Taekwondo</li>
-          <li class="tag tag--gym">Gym</li>
-        </ul>
-      </article>
-
-      <article class="trainer-card" data-categories="muay thai,taekwondo,gym">
-        <h2 class="trainer-card__name">Coach Ken</h2>
-        <img class="trainer-card__photo" src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=400&q=80" alt="Coach Ken smiling outdoors" />
-        <ul class="tag-list">
-          <li class="tag tag--muaythai">Muay Thai</li>
-          <li class="tag tag--taekwondo">Taekwondo</li>
-          <li class="tag tag--gym">Gym</li>
-        </ul>
-      </article>
-
-      <article class="trainer-card" data-categories="yoga,boxing,zumba,gym">
-        <h2 class="trainer-card__name">Coach Ryan</h2>
-        <img class="trainer-card__photo" src="https://images.unsplash.com/photo-1567013127542-490d757e51fc?auto=format&fit=crop&w=400&q=80" alt="Coach Ryan portrait" />
-        <ul class="tag-list">
-          <li class="tag tag--yoga">Yoga</li>
-          <li class="tag tag--boxing">Boxing</li>
-          <li class="tag tag--zumba">Zumba</li>
-          <li class="tag tag--gym">Gym</li>
-        </ul>
-      </article>
-
-      <article class="trainer-card" data-categories="muay thai,yoga,gym">
-        <h2 class="trainer-card__name">Coach Irene</h2>
-        <img class="trainer-card__photo" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80" alt="Coach Irene posing" />
-        <ul class="tag-list">
-          <li class="tag tag--muaythai">Muay Thai</li>
-          <li class="tag tag--yoga">Yoga</li>
-          <li class="tag tag--gym">Gym</li>
-        </ul>
-      </article>
-
-      <article class="trainer-card" data-categories="yoga,zumba,taekwondo,gym">
-        <h2 class="trainer-card__name">Coach Vince</h2>
-        <img class="trainer-card__photo" src="https://images.unsplash.com/photo-1583468982228-19f19164aee2?auto=format&fit=crop&w=400&q=80" alt="Coach Vince in the gym" />
-        <ul class="tag-list">
-          <li class="tag tag--yoga">Yoga</li>
-          <li class="tag tag--zumba">Zumba</li>
-          <li class="tag tag--taekwondo">Taekwondo</li>
-          <li class="tag tag--gym">Gym</li>
-        </ul>
-      </article>
-
-      <article class="trainer-card" data-categories="taekwondo,boxing,gym">
-        <h2 class="trainer-card__name">Coach Kyroll</h2>
-        <img class="trainer-card__photo" src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80" alt="Coach Kyroll sitting outdoors" />
-        <ul class="tag-list">
-          <li class="tag tag--taekwondo">Taekwondo</li>
-          <li class="tag tag--boxing">Boxing</li>
-          <li class="tag tag--gym">Gym</li>
-        </ul>
-      </article>
-
-    </div>
-
-    <p class="trainers-empty" id="trainers-empty" hidden>No trainers found for this category yet.</p>
+    <div class="trainers-grid" id="trainers-grid" aria-live="polite"></div>
+    <p class="trainers-empty" id="trainers-empty" hidden>No trainers found for this specialty.</p>
+    <p class="form-error is-visible" id="trainers-error" role="alert" hidden></p>
   </main>
 
 </div>
 
-
-<script>
-  var categoryFilter = document.getElementById('category-filter');
-  var trainerCards = document.querySelectorAll('.trainer-card');
-  var emptyState = document.getElementById('trainers-empty');
-
-  function applyTrainerFilter() {
-    var selected = categoryFilter.value.trim().toLowerCase();
-    var visibleCount = 0;
-
-    trainerCards.forEach(function (card) {
-      var categories = (card.getAttribute('data-categories') || '').split(',').map(function (c) {
-        return c.trim();
-      });
-      var matches = selected === 'all categories' || categories.indexOf(selected) !== -1;
-      card.hidden = !matches;
-      if (matches) visibleCount++;
-    });
-
-    emptyState.hidden = visibleCount !== 0;
-  }
-
-  categoryFilter.addEventListener('change', applyTrainerFilter);
-  applyTrainerFilter();
-</script>
 
 <script>
   document.addEventListener('click', function (e) {
@@ -188,5 +91,6 @@
     });
   });
 </script>
+<script src="trainers.js"></script>
 </body>
 </html>

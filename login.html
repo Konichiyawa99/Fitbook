@@ -138,13 +138,21 @@
   var submitButton = this.querySelector('button[type="submit"]');
   submitButton.disabled = true;
   try {
-    const { error } = await window.supabaseClient.auth.signInWithPassword({
+    const { data, error } = await window.supabaseClient.auth.signInWithPassword({
       email: emailInput,
       password: passwordInput
     });
 
     if (error) throw error;
-    window.location.href = 'memberdashboard.html';
+    if ((data.user.user_metadata || {}).account_type === 'member') {
+      await window.GTGData.ensureMemberProfile(data.user);
+    }
+    var account = await window.GTGData.getAccount();
+    var role = window.GTGData.accountRole(account).toLowerCase();
+    if (role.indexOf('admin') !== -1) window.location.href = 'admindashboard.html';
+    else if (role.indexOf('trainer') !== -1) window.location.href = 'trainerdashboard.html';
+    else if (account && account.member) window.location.href = 'memberdashboard.html';
+    else throw new Error('No member, trainer, or admin profile is linked to this account.');
   } catch (error) {
     console.error('Unable to log in:', error);
     showError('Unable to log in: ' + error.message, [emailEl, passEl]);

@@ -32,9 +32,8 @@
       </summary>
       <div class="settings-panel">
         <div class="settings-panel__profile">
-          <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80" alt="" />
           <div>
-            <p class="settings-panel__profile-name">Madriaga, Rafaela</p>
+            <p class="settings-panel__profile-name"></p>
             <p class="settings-panel__profile-sub">Member</p>
           </div>
         </div>
@@ -71,23 +70,23 @@
   </nav>
 
   <main class="app-main">
-    <h1 class="page-title">Good morning, Rafaela!</h1>
+    <h1 class="page-title">Good morning, <span data-profile-first-name></span>!</h1>
     <p class="page-subtitle">Every rep brings you closer, ready for your journey?</p>
+    <p class="form-error is-visible" id="member-dashboard-error" role="alert" hidden></p>
 
     <div class="dashboard-grid">
 
       <div class="stack">
         <section class="card" aria-labelledby="ongoing-heading">
           <h2 id="ongoing-heading" class="card-heading">On-going Class</h2>
-          <span class="class-pill">YOGA</span>
+          <span class="class-pill" id="member-ongoing-class">No class scheduled</span>
         </section>
 
         <section class="card" aria-labelledby="enrolled-heading">
-          <h2 id="enrolled-heading" class="card-heading">Classes you Enrolled: <span class="badge-count">1</span></h2>
+          <h2 id="enrolled-heading" class="card-heading">Classes you Enrolled: <span class="badge-count" id="enrolled-count">0</span></h2>
           <label for="subscribed-classes" class="visually-hidden">Subscribed classes</label>
           <select id="subscribed-classes" class="select-native">
-            <option>Muay Thai</option>
-            <option>Taekwondo</option>
+            <option value="">All classes</option>
           </select>
         </section>
 
@@ -104,24 +103,19 @@
         <section class="card" aria-labelledby="upcoming-heading">
           <h2 id="upcoming-heading" class="card-heading">Upcoming Classes</h2>
           <div class="upcoming-coach">
-            <img src="https://images.unsplash.com/photo-1615109398623-88346a601842?auto=format&fit=crop&w=150&q=80" alt="Coach Ash" />
+            <img src="" alt="" hidden />
             <div>
-              <p class="upcoming-coach__name">Coach Ash</p>
-              <p class="upcoming-coach__class">Taekwondo</p>
-              <p class="upcoming-coach__time">1PM Tomorrow</p>
+              <p class="upcoming-coach__name" id="upcoming-trainer"></p>
+              <p class="upcoming-coach__class" id="upcoming-class">No upcoming classes</p>
+              <p class="upcoming-coach__time" id="upcoming-time"></p>
             </div>
           </div>
-          <button type="button" class="btn btn-navy btn-block" onclick="document.getElementById('payment-modal').showModal()">Book class!</button>
+          <a href="classes.html" class="btn btn-navy btn-block">Book a class</a>
         </section>
 
         <section class="card trainer-notes" aria-labelledby="notes-heading">
-          <h2 id="notes-heading" class="card-heading">Trainer Notes <span class="badge-count">1</span></h2>
-          <p><strong>Coach Irene:</strong> Hi Rafaela! Our next session for Taekwondo is all about Power Kicks &amp; Core Strength</p>
-          <ul>
-            <li><strong>Squat Jumps</strong> – Builds explosive leg power for higher kicks.</li>
-            <li><strong>Lunges with Twist</strong> – Strengthens legs and improves rotational core stability.</li>
-            <li><strong>Plank to Push-up</strong> – Enhances upper body strength and...</li>
-          </ul>
+          <h2 id="notes-heading" class="card-heading">Trainer Notes</h2>
+          <p>Trainer notes are not available in the current database schema.</p>
         </section>
       </div>
 
@@ -130,31 +124,19 @@
 
   <aside class="app-aside" aria-label="Profile summary">
     <div class="profile-card">
-      <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80" alt="" />
       <div>
-        <p class="profile-card__name">Madriaga, Rafaela</p>
-        <p class="profile-card__age">17 years old</p>
+        <p class="profile-card__name"></p>
+        <p class="profile-card__age" id="member-profile-meta"></p>
       </div>
     </div>
 
     <dl class="profile-stats">
-      <div>
-        <dt>Height</dt>
-        <dd>6'1</dd>
-      </div>
-      <div>
-        <dt>Weight</dt>
-        <dd>65 kg</dd>
-      </div>
-      <div>
-        <dt>Gender</dt>
-        <dd>Female</dd>
-      </div>
+      <div><dt>Gender</dt><dd id="member-gender"></dd></div>
     </dl>
 
     <div class="announcements">
       <h2 class="card-heading">Today's Announcements</h2>
-      <p class="announcements__box">New Zumba schedule starts next week reserve your slot early!</p>
+      <p class="announcements__box">Announcements are not available in the current database schema.</p>
     </div>
 
     <div class="aside-heading">
@@ -178,56 +160,6 @@
   </aside>
 
 </div>
-
-<!-- Payment modal -->
-<dialog id="payment-modal" class="payment-modal">
-  <form method="dialog" class="payment-modal__inner">
-    <div class="payment-modal__header">
-      <h2>Payment</h2>
-      <button type="button" class="payment-modal__close" aria-label="Close payment dialog" onclick="this.closest('dialog').close()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path d="M18 6 6 18"></path>
-          <path d="m6 6 12 12"></path>
-        </svg>
-      </button>
-    </div>
-
-    <label for="pay-email" class="visually-hidden">Email</label>
-    <input type="email" id="pay-email" class="input-native" placeholder="Email" autocomplete="email" required />
-
-    <h3>Scan to Pay</h3>
-    <div class="qr-payment">
-      <img
-        src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=GTGFitness-GCash-Payment"
-        alt="GCash payment QR code — scan with your GCash app to pay" />
-      <p class="qr-payment__caption">Open your GCash app and scan this QR code to send your payment.</p>
-    </div>
-
-    <h3>Reference Number</h3>
-    <label for="ref-number" class="visually-hidden">GCash reference number</label>
-    <input type="text" id="ref-number" class="input-native" placeholder="e.g. 1234 5678 9012" inputmode="numeric" required />
-    <p class="field-hint">Enter the reference number from your GCash payment confirmation.</p>
-
-    <h3>Country or Region</h3>
-    <label for="country" class="visually-hidden">Country or region</label>
-    <select id="country" class="input-native select-native">
-      <option>Philippines</option>
-      <option>United States</option>
-      <option>Singapore</option>
-      <option>Australia</option>
-    </select>
-
-    <div class="checkbox-row">
-      <input type="checkbox" id="save-info" />
-      <label for="save-info">Save my Information for faster checkout</label>
-    </div>
-
-    <div class="payment-modal__actions">
-      <button type="submit" class="btn btn-navy">Continue</button>
-    </div>
-  </form>
-</dialog>
-
 
 <script src="dashboard.js"></script>
 <script src="payment-history.js"></script>

@@ -1,103 +1,179 @@
 document.addEventListener('DOMContentLoaded', function () {
+  var roleFilter = document.getElementById('role-filter');
+  var tableBody = document.querySelector('#checkin-table tbody');
+  var emptyState = document.getElementById('checkin-empty');
+  var errorState = document.getElementById('trainer-dashboard-error');
+  var today = new Date();
+  var year = today.getFullYear();
+  var monthSelect = document.getElementById('dash-month-select');
+  var yearLabel = document.getElementById('dash-calendar-year');
+  var calendar = document.getElementById('dash-big-calendar');
+  var todayAttendance = [];
+  var classesById = {};
 
-  /* ---------- Settings menu: close when clicking outside ---------- */
-  document.addEventListener('click', function (e) {
-    document.querySelectorAll('details.settings-menu[open]').forEach(function (d) {
-      if (!d.contains(e.target)) d.removeAttribute('open');
-    });
-  });
-
-  /* ---------- Check-in / check-out log: role filter ---------- */
-  const roleFilter = document.getElementById('role-filter');
-  const logRows    = document.querySelectorAll('#checkin-table tbody tr');
-  const emptyState = document.getElementById('checkin-empty');
-
-  // Re-apply filter + alternate the row colours on the rows that are actually visible
-  function applyLogFilter() {
-    const role = roleFilter.value;
-    let visibleCount = 0;
-
-    logRows.forEach(function (row) {
-      const matches = role === 'all' || row.getAttribute('data-role') === role;
-      row.classList.toggle('is-hidden', !matches);
-      row.classList.remove('is-striped');
-      if (matches) {
-        if (visibleCount % 2 === 1) row.classList.add('is-striped');
-        visibleCount++;
-      }
-    });
-
-    if (emptyState) emptyState.hidden = visibleCount !== 0;
+  function localDate(date) {
+    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' +
+      String(date.getDate()).padStart(2, '0');
   }
 
-  if (roleFilter) {
-    roleFilter.addEventListener('change', applyLogFilter);
-    applyLogFilter(); // stripe the rows on first load
+  function showError(error) {
+    console.error('Unable to load trainer dashboard:', error);
+    errorState.hidden = false;
+    errorState.textContent = 'Dashboard data could not be loaded: ' + error.message;
   }
 
-  /* ---------- Attended Classes calendar ---------- */
-  const dashMonthSelect = document.getElementById('dash-month-select');
-  const dashYearLabel   = document.getElementById('dash-calendar-year');
-  const dashCalendar    = document.getElementById('dash-big-calendar');
+  function renderCalendar(schedules, month) {
+    calendar.querySelectorAll('.big-calendar__cell').forEach(function (cell) { cell.remove(); });
+    var first = new Date(year, month, 1).getDay();
+    var total = new Date(year, month + 1, 0).getDate();
+    var scheduledDays = new Set(schedules
+      .filter(function (row) { return Number(row.scheduledate.slice(5, 7)) === month + 1; })
+      .map(function (row) { return Number(row.scheduledate.slice(8, 10)); }));
 
-  if (dashMonthSelect && dashYearLabel && dashCalendar) {
-    const dashMonthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-
-    const dashToday = new Date();
-    const dashCurrentYear = dashToday.getFullYear(); // always the real current year
-
-    let dashSelectedCell = null; // currently highlighted day button
-
-    function dashPopulateMonthSelect(selectedMonth) {
-      dashMonthSelect.innerHTML = dashMonthNames
-        .map((name, i) => `<option value="${i}"${i === selectedMonth ? ' selected' : ''}>${name}</option>`)
-        .join('');
-    }
-
-    function dashAddCell(day) {
-      const cell = document.createElement(day ? 'button' : 'span');
+    function addCell(day) {
+      var cell = document.createElement(day ? 'button' : 'span');
       cell.className = 'big-calendar__cell' + (day ? '' : ' big-calendar__cell--blank');
       if (day) {
         cell.type = 'button';
         cell.textContent = day;
-        cell.addEventListener('click', () => dashSelectDate(cell));
+        if (scheduledDays.has(day)) cell.classList.add('has-booking');
       }
-      dashCalendar.appendChild(cell);
+      calendar.appendChild(cell);
     }
 
-    function dashRenderCalendar(year, month) {
-      dashCalendar.querySelectorAll('.big-calendar__cell').forEach(cell => cell.remove());
-      dashCalendar.setAttribute('aria-label', `${dashMonthNames[month]} ${year}`);
-      dashSelectedCell = null;
-
-      const firstWeekday = new Date(year, month, 1).getDay();       // 0=Sun ... 6=Sat
-      const totalDays    = new Date(year, month + 1, 0).getDate();  // handles 28/29/30/31
-
-      for (let i = 0; i < firstWeekday; i++) dashAddCell(null);
-      for (let day = 1; day <= totalDays; day++) dashAddCell(day);
-
-      // pad the last row out to a full 7 columns
-      const trailingBlanks = (7 - ((firstWeekday + totalDays) % 7)) % 7;
-      for (let i = 0; i < trailingBlanks; i++) dashAddCell(null);
-    }
-
-    function dashSelectDate(cell) {
-      if (dashSelectedCell) dashSelectedCell.classList.remove('is-selected');
-      cell.classList.add('is-selected');
-      dashSelectedCell = cell;
-    }
-
-    dashMonthSelect.addEventListener('change', () => {
-      dashRenderCalendar(dashCurrentYear, parseInt(dashMonthSelect.value, 10));
-    });
-
-    // Initial setup: today's real month/year
-    dashYearLabel.textContent = dashCurrentYear;
-    dashPopulateMonthSelect(dashToday.getMonth());
-    dashRenderCalendar(dashCurrentYear, dashToday.getMonth());
+    for (var blank = 0; blank < first; blank++) addCell(null);
+    for (var day = 1; day <= total; day++) addCell(day);
+    var trailing = (7 - ((first + total) % 7)) % 7;
+    for (var pad = 0; pad < trailing; pad++) addCell(null);
   }
 
+  function renderLog() {
+    var selectedRole = roleFilter.value;
+    var visible = 0;
+    tableBody.querySelectorAll('tr').forEach(function (row) {
+      var matches = selectedRole === 'all' || row.dataset.role === selectedRole;
+      row.classList.toggle('is-hidden', !matches);
+      if (matches) visible++;
+    });
+    emptyState.hidden = visible > 0;
+  }
+
+  async function load() {
+    var account = await window.GTGData.getAccount();
+    if (!account || !account.trainer) throw new Error('This account is not linked to a trainer profile.');
+    var name = window.GTGData.accountName(account);
+    document.querySelector('[data-profile-first-name]').textContent = name.split(' ')[0] || 'Trainer';
+    document.getElementById('trainer-profile-meta').textContent =
+      account.employee && account.employee.age ? account.employee.age + ' years old' : '';
+    document.getElementById('trainer-age').textContent =
+      account.employee && account.employee.age ? account.employee.age : '—';
+    document.getElementById('trainer-gender').textContent =
+      account.employee && account.employee.sex ? account.employee.sex : '—';
+    document.getElementById('trainer-specialty').textContent = account.trainer.specialty || '—';
+    var assignedTags = document.getElementById('assigned-tags');
+    if (account.trainer.specialty) {
+      var tag = document.createElement('li');
+      tag.className = 'tag';
+      tag.textContent = account.trainer.specialty;
+      assignedTags.appendChild(tag);
+    }
+
+    var todayKey = localDate(today);
+    var daySchedules = window.GTGData.throwIfError(await window.supabaseClient.from('tbl_schedule')
+      .select('scheduleid, classesid, scheduledate, time')
+      .eq('trainerid', account.trainer.trainerid)
+      .eq('scheduledate', todayKey)
+      .order('time', { ascending: true })) || [];
+    async function fetchMonthSchedules(month) {
+      var monthStart = new Date(year, month, 1);
+      var monthEnd = new Date(year, month + 1, 1);
+      return window.GTGData.throwIfError(await window.supabaseClient.from('tbl_schedule')
+        .select('scheduleid, classesid, scheduledate, time')
+        .eq('trainerid', account.trainer.trainerid)
+        .gte('scheduledate', localDate(monthStart))
+        .lt('scheduledate', localDate(monthEnd))) || [];
+    }
+    var monthSchedules = await fetchMonthSchedules(today.getMonth());
+
+    var classIds = Array.from(new Set(daySchedules.concat(monthSchedules).map(function (row) {
+      return row.classesid;
+    }).filter(Boolean)));
+    var classes = classIds.length
+      ? window.GTGData.throwIfError(await window.supabaseClient.from('tbl_classes')
+        .select('classesid, classesname').in('classesid', classIds))
+      : [];
+    classes.forEach(function (row) { classesById[row.classesid] = row; });
+
+    var nextSchedule = daySchedules.filter(function (row) {
+      var parts = String(row.time || '').split(':');
+      return Number(parts[0]) * 60 + Number(parts[1]) >= today.getHours() * 60 + today.getMinutes();
+    })[0];
+    if (nextSchedule) {
+      var nextClass = classesById[nextSchedule.classesid];
+      document.getElementById('trainer-today-class').textContent = nextClass ? nextClass.classesname : 'Scheduled class';
+    } else {
+      document.getElementById('trainer-today-class').textContent = 'No upcoming class';
+    }
+
+    var scheduleIds = daySchedules.map(function (row) { return row.scheduleid; });
+    todayAttendance = scheduleIds.length
+      ? window.GTGData.throwIfError(await window.supabaseClient.from('tbl_memberattendance')
+        .select('memberattendanceid, memberid, scheduleid, timein, timeout')
+        .in('scheduleid', scheduleIds)
+        .order('timein', { ascending: false }))
+      : [];
+    var memberIds = Array.from(new Set(todayAttendance.map(function (row) { return row.memberid; }).filter(Boolean)));
+    var members = memberIds.length
+      ? window.GTGData.throwIfError(await window.supabaseClient.from('tbl_member')
+        .select('memberid, firstname, lastname').in('memberid', memberIds))
+      : [];
+    var membersById = {};
+    members.forEach(function (row) { membersById[row.memberid] = row; });
+
+    tableBody.textContent = '';
+    todayAttendance.forEach(function (row, index) {
+      var member = membersById[row.memberid] || {};
+      var values = [
+        todayAttendance.length - index,
+        member.firstname || '',
+        member.lastname || '',
+        row.timein ? new Date(row.timein).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '—',
+        row.timeout ? new Date(row.timeout).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '—',
+        'Member'
+      ];
+      var tr = document.createElement('tr');
+      tr.dataset.role = 'member';
+      values.forEach(function (value) {
+        var cell = document.createElement('td');
+        cell.textContent = value;
+        tr.appendChild(cell);
+      });
+      tableBody.appendChild(tr);
+    });
+
+    document.getElementById('trainer-attendees-today').textContent = todayAttendance.length;
+    var classAttendees = nextSchedule
+      ? todayAttendance.filter(function (row) { return row.scheduleid === nextSchedule.scheduleid; }).length
+      : 0;
+    document.getElementById('trainer-class-attendees').textContent = classAttendees;
+
+    monthSelect.replaceChildren();
+    for (var month = 0; month < 12; month++) {
+      monthSelect.add(new Option(new Date(year, month, 1).toLocaleString([], { month: 'long' }), month));
+    }
+    monthSelect.value = String(today.getMonth());
+    yearLabel.textContent = year;
+    monthSelect.addEventListener('change', function () {
+      var month = Number(monthSelect.value);
+      fetchMonthSchedules(month).then(function (schedules) {
+        monthSchedules = schedules;
+        renderCalendar(monthSchedules, month);
+      }).catch(showError);
+    });
+    renderCalendar(monthSchedules, today.getMonth());
+    renderLog();
+  }
+
+  roleFilter.addEventListener('change', renderLog);
+  load().catch(showError);
 });

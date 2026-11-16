@@ -30,9 +30,8 @@
       </summary>
       <div class="settings-panel">
         <div class="settings-panel__profile">
-          <img src="https://images.unsplash.com/photo-1594381898411-846e7d193883?auto=format&fit=crop&w=100&q=80" alt="" />
           <div>
-            <p class="settings-panel__profile-name">Navarro, Irene Celeste</p>
+            <p class="settings-panel__profile-name"></p>
             <p class="settings-panel__profile-sub">Trainer</p>
           </div>
         </div>
@@ -75,25 +74,26 @@
   </nav>
 
   <main class="app-main">
-    <h1 class="page-title">Good morning, Irene!</h1>
+    <h1 class="page-title">Good morning, <span data-profile-first-name></span>!</h1>
     <p class="page-subtitle">Every rep brings you closer, ready for your journey?</p>
+    <p class="form-error is-visible" id="trainer-dashboard-error" role="alert" hidden></p>
 
     <div class="trainer-stack">
 
       <section class="card stat-card" aria-labelledby="attendees-heading">
         <h2 id="attendees-heading" class="stat-card__label">Attendees Today</h2>
-        <p class="stat-card__value">21</p>
+        <p class="stat-card__value" id="trainer-attendees-today">—</p>
       </section>
 
       <section class="card split-card" aria-label="Ongoing class summary">
         <div class="split-card__section">
           <h2>On-going Class</h2>
-          <span class="class-pill">YOGA</span>
+          <span class="class-pill" id="trainer-today-class">No class scheduled</span>
         </div>
         <div class="split-card__divider" aria-hidden="true"></div>
         <div class="split-card__section">
           <h2>Attendees for this class</h2>
-          <p class="split-card__stat">4</p>
+          <p class="split-card__stat" id="trainer-class-attendees">0</p>
         </div>
       </section>
 
@@ -105,7 +105,6 @@
             <select id="role-filter" class="select-native">
               <option value="all">All Role</option>
               <option value="member">Member</option>
-              <option value="nonmember">NonMember</option>
             </select>
           </div>
         </div>
@@ -122,14 +121,7 @@
                 <th scope="col">Type</th>
               </tr>
             </thead>
-            <tbody>
-              <tr data-role="nonmember"><td>21</td><td>Jasmine</td><td>Mosura</td><td>12:42 PM</td><td>8:05 AM</td><td>NonMember</td></tr>
-              <tr data-role="member"><td>20</td><td>Francis</td><td>Madriaga</td><td>11:18 AM</td><td>10:20 AM</td><td>Member</td></tr>
-              <tr data-role="nonmember"><td>19</td><td>Eugene</td><td>Balando</td><td>11:10 AM</td><td>12:00 PM</td><td>NonMember</td></tr>
-              <tr data-role="member"><td>18</td><td>Christoph</td><td>Estenilo</td><td>9:30 AM</td><td>2:35 PM</td><td>Member</td></tr>
-              <tr data-role="nonmember"><td>17</td><td>Avril</td><td>Felix</td><td>9:27 AM</td><td>4:15 PM</td><td>NonMember</td></tr>
-              <tr data-role="member"><td>16</td><td>RJ</td><td>Nalda</td><td>8:12 AM</td><td>7:00 PM</td><td>Member</td></tr>
-            </tbody>
+            <tbody></tbody>
           </table>
           <p class="data-table__empty" id="checkin-empty" hidden>No check-ins match this filter.</p>
         </div>
@@ -140,31 +132,30 @@
 
   <aside class="app-aside" aria-label="Profile summary">
     <div class="profile-card">
-      <img src="https://images.unsplash.com/photo-1594381898411-846e7d193883?auto=format&fit=crop&w=150&q=80" alt="" />
       <div>
-        <p class="profile-card__name">Navarro, Irene Celeste</p>
-        <p class="profile-card__age">17 years old</p>
+        <p class="profile-card__name"></p>
+        <p class="profile-card__age" id="trainer-profile-meta"></p>
       </div>
     </div>
 
     <dl class="profile-stats">
       <div>
-        <dt>Height</dt>
-        <dd>6'1</dd>
+        <dt>Age</dt>
+        <dd id="trainer-age">—</dd>
       </div>
       <div>
-        <dt>Weight</dt>
-        <dd>65 kg</dd>
+        <dt>Specialty</dt>
+        <dd id="trainer-specialty">—</dd>
       </div>
       <div>
         <dt>Gender</dt>
-        <dd>Female</dd>
+        <dd id="trainer-gender">—</dd>
       </div>
     </dl>
 
     <div class="announcements">
       <h2 class="card-heading">Today's Announcements</h2>
-      <p class="announcements__box">New Zumba schedule starts next week reserve your slot early!</p>
+      <p class="announcements__box">Announcements are not available in the current database schema.</p>
     </div>
 
     <!-- Attended calendar (same as member dashboard, driven by trainerdashboard.js) -->
@@ -188,11 +179,7 @@
     </div>
 
     <h2 class="assigned-heading">Assigned classes:</h2>
-    <ul class="assigned-tags">
-      <li class="tag tag--taekwondo">Taekwondo</li>
-      <li class="tag tag--yoga">Yoga</li>
-      <li class="tag tag--zumba">Zumba</li>
-    </ul>
+    <ul class="assigned-tags" id="assigned-tags"></ul>
   </aside>
 
 </div>
