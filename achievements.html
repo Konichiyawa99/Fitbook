@@ -12,8 +12,6 @@
 <link href="https://fonts.googleapis.com/css2?family=BBH+Bogle&display=swap" rel="stylesheet" />
 
 <link rel="stylesheet" href="app.css" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js"></script>
 </head>
 <body>
 
@@ -30,8 +28,9 @@
       </summary>
       <div class="settings-panel">
         <div class="settings-panel__profile">
+          <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80" alt="" />
           <div>
-            <p class="settings-panel__profile-name"></p>
+            <p class="settings-panel__profile-name">Madriaga, Rafaela</p>
             <p class="settings-panel__profile-sub">Member</p>
           </div>
         </div>
@@ -69,9 +68,28 @@
   <main class="app-main">
     <h1 class="page-title">Achievements! 🏆</h1>
 
-    <section class="card achievements-card" id="progress-list" aria-label="Your progress"></section>
-    <p class="data-table__empty" id="progress-empty" hidden>No progress records are available.</p>
-    <p class="form-error is-visible" id="progress-error" role="alert" hidden></p>
+    <section class="card achievements-card" aria-label="Your achievements">
+      <div class="achievement-row">
+        <span class="achievement-row__icon" aria-hidden="true">👥</span>
+        Attend any 5 classes
+      </div>
+      <div class="achievement-row">
+        <span class="achievement-row__icon" aria-hidden="true">🥊</span>
+        Pacman: Attend 67 classes of Boxing
+      </div>
+      <div class="achievement-row">
+        <span class="achievement-row__icon" aria-hidden="true">🥇</span>
+        Youngster: Attend your Muay Thai class
+      </div>
+      <div class="achievement-row">
+        <span class="achievement-row__icon" aria-hidden="true">🔥</span>
+        Consistency Streak
+      </div>
+      <div class="achievement-row">
+        <span class="achievement-row__icon" aria-hidden="true">🔍</span>
+        Dora: Class Explorer
+      </div>
+    </section>
   </main>
 
 </div>
@@ -84,6 +102,5 @@
     });
   });
 </script>
-<script src="achievements.js"></script>
 </body>
 </html>
