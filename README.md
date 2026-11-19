@@ -1,1 +1,0 @@
-up una dat
