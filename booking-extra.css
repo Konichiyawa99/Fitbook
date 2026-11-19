@@ -1,0 +1,37 @@
+/* Extra styles for the Booking Date side panel */
+
+/* class the member enrolled in: shown but cannot be changed */
+.sched-fixed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: #ececea;
+  color: var(--text-dark);
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: default;
+  user-select: none;
+}
+.sched-fixed svg { width: 15px; height: 15px; flex: none; color: #7a7a78; }
+
+/* hint under "Time Available" */
+.sched-times-note { margin: 0; font-size: 0.78rem; color: #8a8a88; }
+.sched-times-note--center { text-align: center; margin-bottom: 1rem; }
+
+/* booking details: one bullet per line, label on the left, value aligned to the right */
+.sched-details {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  line-height: 1.8;
+  font-weight: 500;
+}
+.sched-details li { display: flex; gap: 0.5rem; align-items: baseline; }
+.sched-details li::before { content: "\2022"; flex: none; }
+.sched-details__label { flex: 1; }
+.sched-details__value { text-align: right; }
+.sched-details__strong { font-weight: 700; }
