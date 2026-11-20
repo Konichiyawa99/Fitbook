@@ -9,6 +9,19 @@
     nodes.forEach(function (node) { node.textContent = text; });
   }
 
+  function setImage(selector, source, alt) {
+    var image = document.querySelector(selector);
+    if (!image) return;
+    if (!source) {
+      image.hidden = true;
+      image.removeAttribute('src');
+      return;
+    }
+    image.src = source;
+    image.alt = alt || '';
+    image.hidden = false;
+  }
+
   function formatName(member, authUser) {
     var first = member && member.firstname;
     var last = member && member.lastname;
@@ -87,7 +100,7 @@
   async function loadClassNames(memberId) {
     var bookingResult = await supabase
       .from('tbl_booking')
-      .select('scheduleid')
+      .select('bookingid, scheduleid')
       .eq('memberid', memberId);
     if (bookingResult.error) throw bookingResult.error;
 
@@ -115,7 +128,7 @@
   async function loadUpcoming(memberId) {
     var bookingResult = await supabase
       .from('tbl_booking')
-      .select('scheduleid')
+      .select('bookingid, scheduleid')
       .eq('memberid', memberId);
     if (bookingResult.error) throw bookingResult.error;
 
@@ -135,6 +148,9 @@
     if (!scheduleResult.data || !scheduleResult.data.length) return null;
 
     var schedule = scheduleResult.data[0];
+    var booking = (bookingResult.data || []).find(function (item) {
+      return item.scheduleid === schedule.scheduleid;
+    });
     var classResult = await supabase
       .from('tbl_classes')
       .select('classesname')
@@ -146,7 +162,7 @@
     if (schedule.trainerid) {
       var trainerResult = await supabase
         .from('tbl_trainer')
-        .select('employeeid')
+        .select('employeeid, avatar_url')
         .eq('trainerid', schedule.trainerid)
         .maybeSingle();
       if (!trainerResult.error && trainerResult.data && trainerResult.data.employeeid) {
@@ -164,6 +180,9 @@
     return {
       className: classResult.data ? classResult.data.classesname : 'Class',
       trainerName: trainerName.trim(),
+      trainerImage: trainerResult && trainerResult.data ? trainerResult.data.avatar_url : '',
+      bookingId: booking ? booking.bookingid : null,
+      scheduleId: schedule.scheduleid,
       date: schedule.scheduledate,
       time: schedule.time
     };
@@ -189,6 +208,48 @@
     return (result.data || []).map(function (row) { return row.timein; });
   }
 
+  async function loadAnnouncement() {
+    var result = await supabase
+      .from('tbl_announcement')
+      .select('title, message')
+      .eq('isactive', true)
+      .order('announcementid', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (result.error) throw result.error;
+    return result.data;
+  }
+
+  async function loadDashboardConfig() {
+    var result = await supabase
+      .from('tbl_dashboard_config')
+      .select('payment_qr_url, payment_method, countries')
+      .eq('configid', 1)
+      .maybeSingle();
+    if (result.error) throw result.error;
+    return result.data;
+  }
+
+  function renderPaymentEmail(email) {
+    var input = document.getElementById('pay-email');
+    if (input && email) input.value = email;
+  }
+
+  function renderDashboardConfig(config) {
+    if (!config) return;
+    var qr = document.getElementById('payment-qr');
+    var caption = document.getElementById('payment-qr-caption');
+
+    if (config.payment_qr_url && qr) {
+      qr.src = config.payment_qr_url;
+      qr.alt = config.payment_method ? config.payment_method + ' payment QR code' : 'Payment QR code';
+      qr.hidden = false;
+    }
+    if (caption) caption.textContent = config.payment_method
+      ? 'Use ' + config.payment_method + ' to complete your payment.'
+      : '';
+  }
+
   async function init() {
     var sessionResult = await supabase.auth.getSession();
     var session = sessionResult.data ? sessionResult.data.session : null;
@@ -201,16 +262,23 @@
       var result = await findMember(session.user);
       var member = result ? result.member : null;
       var name = formatName(member, session.user);
+      renderPaymentEmail(session.user.email);
       setText('.settings-panel__profile-name', name.last ? name.last + ', ' + name.first : name.first);
       setText('.page-title', 'Good morning, ' + name.first + '!');
       setText('.profile-card__name', name.last ? name.last + ', ' + name.first : name.first);
       setText('.profile-card__age', member && member.age ? member.age + ' years old' : 'Age not set');
-      setText('.profile-stats div:nth-child(1) dd', 'Not set');
-      setText('.profile-stats div:nth-child(2) dd', 'Not set');
-      setText('.profile-stats div:nth-child(3) dd', member && member.sex ? member.sex : 'Not set');
+      setText('#member-height', member && member.height ? member.height : 'Not set');
+      setText('#member-weight', member && member.weight ? member.weight : 'Not set');
+      setText('#member-gender', member && member.sex ? member.sex : 'Not set');
+      setImage('#settings-profile-image', member && member.avatar_url, name.first + ' ' + name.last);
+      setImage('#profile-image', member && member.avatar_url, name.first + ' ' + name.last);
 
       if (!result) {
         setText('.payment-empty', 'No member profile is linked to this account.');
+        return;
+      }
+      if (!member) {
+        setText('.page-subtitle', 'Your account does not have a member profile yet.');
         return;
       }
 
@@ -234,12 +302,35 @@
       var upcoming = await loadUpcoming(memberId);
       var ongoingClass = document.getElementById('ongoing-class');
       if (upcoming) {
+        window.GTG_MEMBER_CONTEXT.upcoming = upcoming;
         setText('.upcoming-coach__name', upcoming.trainerName);
         setText('.upcoming-coach__class', upcoming.className);
         setText('.upcoming-coach__time', formatDate(upcoming.date) + (upcoming.time ? ' · ' + upcoming.time : ''));
+        setImage('#upcoming-coach-image', upcoming.trainerImage, upcoming.trainerName);
         if (ongoingClass) {
           var today = new Date().toISOString().slice(0, 10);
           ongoingClass.textContent = upcoming.date === today ? upcoming.className : 'No class today';
+        }
+
+        try {
+          var announcement = await loadAnnouncement();
+          if (announcement) {
+            setText('#announcement-message', announcement.title
+              ? announcement.title + ': ' + announcement.message
+              : announcement.message);
+          }
+        } catch (announcementError) {
+          console.error(announcementError);
+        }
+
+        try {
+          var dashboardConfig = await loadDashboardConfig();
+          if (dashboardConfig) {
+            window.GTG_MEMBER_CONTEXT.paymentMethod = dashboardConfig.payment_method;
+            renderDashboardConfig(dashboardConfig);
+          }
+        } catch (configError) {
+          console.error(configError);
         }
       } else {
         setText('.upcoming-coach__name', 'No upcoming class');

@@ -97,7 +97,7 @@
   }
 
   function buildItem(payment) {
-    var status = (payment.paymentstatus || 'pending').toLower();
+    var status = (payment.paymentstatus || 'pending').toLowerCase();
     var li = el('li', 'payment-item');
     var info = el('div', 'payment-item__info');
     info.appendChild(el('p', 'payment-item__class', payment.paymentmethod || 'Payment'));
@@ -105,7 +105,11 @@
       formatDate(payment.paymentdate) + ' · GCash Ref ' + (payment.referenceno || 'Not available')));
 
     var side = el('div', 'payment-item__side');
-    side.appendChild(el('p', 'payment-item__amount', peso(payment.amountpaid)));
+    side.appendChild(el(
+      'p',
+      'payment-item__amount',
+      payment.amountpaid == null ? 'Receipt submitted' : peso(payment.amountpaid)
+    ));
     side.appendChild(el('span', 'status-pill status-pill--' + status,
       status.charAt(0).toUpperCase() + status.slice(1)));
 
