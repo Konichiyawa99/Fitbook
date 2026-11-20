@@ -128,6 +128,9 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="supabase-config.js"></script>
+<script src="supabase-client.js"></script>
 <script>
   document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -169,7 +172,63 @@
       if (bad[0]) bad[0].focus();
       return;
     }
-    window.location.href = 'login.html';
+    var submitButton = document.querySelector('#signupForm button[type="submit"]');
+    submitButton.disabled = true;
+
+    if (!window.GTG_SUPABASE_READY) {
+      submitButton.disabled = false;
+      err.textContent = window.GTG_SUPABASE_ERROR || 'Supabase is unavailable.';
+      err.classList.add('is-visible');
+      return;
+    }
+
+    window.GTG_SUPABASE.auth.signUp({
+      email: email.value.trim(),
+      password: pw.value,
+      options: {
+        data: {
+          first_name: first.value.trim(),
+          last_name: last.value.trim()
+        }
+      }
+    }).then(async function (result) {
+      if (result.error) throw result.error;
+
+      var session = result.data.session;
+      if (!session) {
+        submitButton.disabled = false;
+        err.textContent = 'Account created. Please check your email to confirm it, then log in.';
+        err.classList.add('is-visible');
+        return;
+      }
+
+      var userId = session.user.id;
+      var userResult = await window.GTG_SUPABASE
+        .from('tbl_user')
+        .insert({
+          username: email.value.trim(),
+          email: email.value.trim(),
+          auth_user_id: userId
+        })
+        .select('userid')
+        .single();
+      if (userResult.error) throw userResult.error;
+
+      var memberResult = await window.GTG_SUPABASE
+        .from('tbl_member')
+        .insert({
+          userid: userResult.data.userid,
+          firstname: first.value.trim(),
+          lastname: last.value.trim()
+        });
+      if (memberResult.error) throw memberResult.error;
+
+      window.location.href = 'memberdashboard.html';
+    }).catch(function (error) {
+      submitButton.disabled = false;
+      err.textContent = error.message || 'Unable to create your account.';
+      err.classList.add('is-visible');
+    });
   });
 </script>
 

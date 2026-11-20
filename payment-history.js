@@ -1,30 +1,11 @@
-/* =========================================================
-   payment-history.js
-   Shows only the payments (and session usage) for the class
-   picked in the "Classes you Enrolled" dropdown.
-   ========================================================= */
+/* Loads payment history for the selected Supabase-enrolled class. */
 (function () {
   'use strict';
 
-  /* SAMPLE DATA — replace with the member's real records
-     (e.g. loaded from your backend). Keys must match the
-     dropdown option text exactly. */
-  var PAYMENTS = {
-    'Muay Thai': [
-      { category: '4-Session Pack', date: 'Nov 3, 2026',  ref: '1234 5678 9012', amount: 500, status: 'paid',    taken: 2, total: 4 },
-      { category: 'Single Session', date: 'Oct 12, 2026', ref: '5555 4444 3333', amount: 150, status: 'paid',    taken: 1, total: 1 }
-    ],
-    'Taekwondo': [
-      { category: '4-Session Pack', date: 'Nov 10, 2026', ref: '9876 5432 1098', amount: 500, status: 'pending', taken: 0, total: 4 }
-    ]
-  };
-
-  var STATUS_LABEL = { paid: 'Paid', pending: 'Pending', failed: 'Failed' };
-
-  var select  = document.getElementById('subscribed-classes');
-  var list    = document.getElementById('payment-list');
-  var count   = document.getElementById('payment-count');
-  var label   = document.getElementById('payment-class');
+  var select = document.getElementById('subscribed-classes');
+  var list = document.getElementById('payment-list');
+  var count = document.getElementById('payment-count');
+  var label = document.getElementById('payment-class');
   var summary = document.getElementById('payment-summary');
   if (!select || !list) return;
 
@@ -36,66 +17,132 @@
   }
 
   function peso(n) {
-    return '\u20B1' + Number(n).toLocaleString('en-PH');
+    return '\u20B1' + Number(n || 0).toLocaleString('en-PH');
   }
 
-  function buildItem(p) {
-    var li = el('li', 'payment-item');
+  function formatDate(value) {
+    if (!value) return 'Date not set';
+    var date = new Date(value);
+    return isNaN(date.getTime())
+      ? value
+      : date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
 
+  async function loadPayments(className) {
+    var context = window.GTG_MEMBER_CONTEXT;
+    var supabase = window.GTG_SUPABASE;
+    if (!context || !supabase) return [];
+
+    var paymentResult = await supabase
+      .from('tbl_payment')
+      .select('*')
+      .eq('memberid', context.memberId)
+      .order('paymentdate', { ascending: false });
+    if (paymentResult.error) throw paymentResult.error;
+
+    var payments = paymentResult.data || [];
+    if (!payments.length) return [];
+
+    var bookingIds = Array.from(new Set(payments
+      .map(function (payment) { return payment.bookingid; })
+      .filter(function (id) { return id != null; })));
+    var classByBooking = {};
+
+    if (bookingIds.length) {
+      var bookingResult = await supabase
+        .from('tbl_booking')
+        .select('bookingid, scheduleid')
+        .in('bookingid', bookingIds);
+      if (!bookingResult.error) {
+        var bookings = bookingResult.data || [];
+        var scheduleIds = Array.from(new Set(bookings.map(function (booking) { return booking.scheduleid; })));
+        var scheduleById = {};
+        var classById = {};
+
+        if (scheduleIds.length) {
+          var scheduleResult = await supabase
+            .from('tbl_schedule')
+            .select('scheduleid, classesid')
+            .in('scheduleid', scheduleIds);
+          if (!scheduleResult.error) {
+            (scheduleResult.data || []).forEach(function (schedule) {
+              scheduleById[schedule.scheduleid] = schedule.classesid;
+            });
+          }
+
+          var classIds = Array.from(new Set(Object.values(scheduleById)));
+          if (classIds.length) {
+            var classResult = await supabase
+              .from('tbl_classes')
+              .select('classesid, classesname')
+              .in('classesid', classIds);
+            if (!classResult.error) {
+              (classResult.data || []).forEach(function (item) {
+                classById[item.classesid] = item.classesname;
+              });
+            }
+          }
+        }
+
+        bookings.forEach(function (booking) {
+          classByBooking[booking.bookingid] = classById[scheduleById[booking.scheduleid]] || '';
+        });
+      }
+    }
+
+    return payments.filter(function (payment) {
+      if (!className || className === 'No enrolled classes') return false;
+      return classByBooking[payment.bookingid] === className;
+    });
+  }
+
+  function buildItem(payment) {
+    var status = (payment.paymentstatus || 'pending').toLower();
+    var li = el('li', 'payment-item');
     var info = el('div', 'payment-item__info');
-    info.appendChild(el('p', 'payment-item__class', p.category));
-    info.appendChild(el('p', 'payment-item__meta', p.date + ' \u00B7 GCash Ref ' + p.ref));
+    info.appendChild(el('p', 'payment-item__class', payment.paymentmethod || 'Payment'));
+    info.appendChild(el('p', 'payment-item__meta',
+      formatDate(payment.paymentdate) + ' · GCash Ref ' + (payment.referenceno || 'Not available')));
 
     var side = el('div', 'payment-item__side');
-    side.appendChild(el('p', 'payment-item__amount', peso(p.amount)));
-    side.appendChild(el('span', 'status-pill status-pill--' + p.status, STATUS_LABEL[p.status] || p.status));
+    side.appendChild(el('p', 'payment-item__amount', peso(payment.amountpaid)));
+    side.appendChild(el('span', 'status-pill status-pill--' + status,
+      status.charAt(0).toUpperCase() + status.slice(1)));
 
     li.appendChild(info);
     li.appendChild(side);
-
-    var sessions = el('div', 'payment-item__sessions');
-    if (p.status === 'paid') {
-      var row = el('div', 'sessions-label');
-      row.appendChild(el('span', '', 'Sessions taken'));
-      row.appendChild(el('strong', '', p.taken + ' / ' + p.total));
-      var bar = el('div', 'sessions-bar');
-      var fill = el('span');
-      fill.style.width = Math.min(100, Math.round((p.taken / p.total) * 100)) + '%';
-      bar.appendChild(fill);
-      sessions.appendChild(row);
-      sessions.appendChild(bar);
-    } else {
-      sessions.appendChild(el('p', 'sessions-note',
-        p.status === 'pending'
-          ? 'Sessions unlock once your payment is verified.'
-          : 'Payment failed. Please try booking again.'));
-    }
-    li.appendChild(sessions);
     return li;
   }
 
-  function render() {
-    var cls = select.value || select.options[select.selectedIndex].text;
-    var items = PAYMENTS[cls] || [];
-
+  async function render() {
+    var cls = select.value;
     list.textContent = '';
     label.textContent = cls;
-    count.textContent = items.length;
 
-    if (!items.length) {
+    if (!cls || cls === 'No enrolled classes') {
+      count.textContent = '0';
       summary.textContent = '';
-      list.appendChild(el('li', 'payment-empty', 'No payments yet for this class.'));
+      list.appendChild(el('li', 'payment-empty', 'No enrolled classes yet.'));
       return;
     }
 
-    var taken = 0, total = 0;
-    items.forEach(function (p) {
-      if (p.status === 'paid') { taken += p.taken; total += p.total; }
-      list.appendChild(buildItem(p));
-    });
-    summary.textContent = total
-      ? 'Total sessions taken: ' + taken + ' of ' + total
-      : 'No sessions available yet';
+    try {
+      var items = await loadPayments(cls);
+      count.textContent = items.length;
+      if (!items.length) {
+        summary.textContent = '';
+        list.appendChild(el('li', 'payment-empty', 'No payments yet for this class.'));
+        return;
+      }
+
+      summary.textContent = items.length + ' payment record' + (items.length === 1 ? '' : 's');
+      items.forEach(function (payment) { list.appendChild(buildItem(payment)); });
+    } catch (error) {
+      console.error(error);
+      count.textContent = '0';
+      summary.textContent = '';
+      list.appendChild(el('li', 'payment-empty', 'Unable to load payment history.'));
+    }
   }
 
   select.addEventListener('change', render);

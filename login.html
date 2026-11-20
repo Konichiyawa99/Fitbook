@@ -99,6 +99,9 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="supabase-config.js"></script>
+<script src="supabase-client.js"></script>
 <script>
    document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -133,26 +136,30 @@
   if (!emailEl.checkValidity())     { return showError('That email doesn\u2019t look right. Please check it.', [emailEl]); }
   if (!passwordInput)               { return showError('Please enter your password.', [passEl]); }
 
-  const validUsers = [
-    { email: 'member1@gmail.com', password: 'member', dashboard: 'memberdashboard.html' },
-    { email: 'trainer1@gmail.com', password: 'trainer', dashboard: 'trainerdashboard.html' },
-    { email: 'admin1@gmail.com', password: 'admin', dashboard: 'admindashboard.html' }
-  ];
+  var submitButton = document.querySelector('#loginForm button[type="submit"]');
+  submitButton.disabled = true;
 
- 
-  const foundUser = validUsers.find(
-    user => user.email === emailInput && user.password === passwordInput
-  );
-
-  if (foundUser) {
-    
-    localStorage.setItem('currentUser', JSON.stringify({ email: foundUser.email }));
-    
-    
-    window.location.href = foundUser.dashboard;
-  } else {
-    showError('Incorrect email or password. Please try again.', [emailEl, passEl]);
+  if (!window.GTG_SUPABASE_READY) {
+    submitButton.disabled = false;
+    return showError(window.GTG_SUPABASE_ERROR || 'Supabase is unavailable.', [emailEl, passEl]);
   }
+
+  window.GTG_SUPABASE.auth.signInWithPassword({
+    email: emailInput,
+    password: passwordInput
+  }).then(function (result) {
+    submitButton.disabled = false;
+    if (result.error) {
+      showError(result.error.message === 'Invalid login credentials'
+        ? 'Incorrect email or password. Please try again.'
+        : result.error.message, [emailEl, passEl]);
+      return;
+    }
+    window.location.href = 'memberdashboard.html';
+  }).catch(function () {
+    submitButton.disabled = false;
+    showError('Unable to connect to Supabase. Please try again.', [emailEl, passEl]);
+  });
 });
 </script>
 

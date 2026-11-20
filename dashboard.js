@@ -54,6 +54,15 @@ document.addEventListener('DOMContentLoaded', function () {
       // pad the last row out to a full 7 columns
       const trailingBlanks = (7 - ((firstWeekday + totalDays) % 7)) % 7;
       for (let i = 0; i < trailingBlanks; i++) dashAddCell(null);
+
+      const attended = window.GTG_ATTENDANCE_DATES || [];
+      dashCalendar.querySelectorAll('.big-calendar__cell').forEach(function (cell) {
+        if (!cell.textContent) return;
+        const dateKey = year + '-' +
+          String(month + 1).padStart(2, '0') + '-' +
+          String(Number(cell.textContent)).padStart(2, '0');
+        if (attended.indexOf(dateKey) !== -1) cell.classList.add('is-attended');
+      });
     }
 
     function dashSelectDate(cell) {
@@ -70,6 +79,18 @@ document.addEventListener('DOMContentLoaded', function () {
     dashYearLabel.textContent = dashCurrentYear;
     dashPopulateMonthSelect(dashToday.getMonth());
     dashRenderCalendar(dashCurrentYear, dashToday.getMonth());
+
+    dashCalendar.addEventListener('gtg-attendance-loaded', function () {
+      var attended = window.GTG_ATTENDANCE_DATES || [];
+      dashCalendar.querySelectorAll('.big-calendar__cell').forEach(function (cell) {
+        if (!cell.textContent) return;
+        var month = dashMonthSelect.value;
+        var dateKey = dashCurrentYear + '-' +
+          String(Number(month) + 1).padStart(2, '0') + '-' +
+          String(Number(cell.textContent)).padStart(2, '0');
+        if (attended.indexOf(dateKey) !== -1) cell.classList.add('is-attended');
+      });
+    });
   }
 
 });
